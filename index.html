@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于物联网的智能温室监控系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: url('背景.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .sensor-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 800px;
+            margin-top: 20px;
+            margin-left: 280px;
+            margin-right: auto;
+        }
+        .sensor-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .temperature { color: #e74c3c; }
+        .humidity { color: #3498db; }
+        .light { color: #f39c12; }
+        .co2 { color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <h1>基于物联网的智能温室监控系统</h1>
+    <div class="dashboard">
+        <div class="sensor-card">
+            <h2>温度</h2>
+            <div class="sensor-value temperature" id="temperature">--°C</div>
+            <p>更新时间: <span id="temp-time">--</span></p>
+        </div>
+        <div class="sensor-card">
+            <h2>湿度</h2>
+            <div class="sensor-value humidity" id="humidity">--%</div>
+            <p>更新时间: <span id="humi-time">--</span></p>
+        </div>
+        <div class="sensor-card">
+            <h2>光照强度</h2>
+            <div class="sensor-value light" id="light">--Lux</div>
+            <p>更新时间: <span id="light-time">--</span></p>
+        </div>
+        <div class="sensor-card">
+            <h2>二氧化碳浓度</h2>
+            <div class="sensor-value co2" id="co2">--ppm</div>
+            <p>更新时间: <span id="co2-time">--</span></p>
+        </div>
+    </div>
+    
+    <div style="display: flex;">
+            <div class="device-status" style="margin-right: 20px; margin-top: 20px; margin-left: -710px; background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 200px; height: 700px;">
+            <h2>设备状态</h2>
+            <div class="status-item">
+                <h3>风扇</h3>
+                <div style="display: flex; gap: 10px;">
+                    <div>
+                        <div class="red-light" id="fan-red" style="width: 40px; height: 40px; border-radius: 50%; background-color: red;"></div>
+                        <div style="font-size: 24px; text-align: center;">关闭</div>
+                    </div>
+                    <div>
+                        <div class="green-light" id="fan-green" style="width: 40px; height: 40px; border-radius: 50%; background-color: gray;"></div>
+                        <div style="font-size: 24px; text-align: center;">开启</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="status-item">
+                <h3>水泵</h3>
+                <div style="display: flex; gap: 10px;">
+                    <div>
+                        <div class="red-light" id="pump-red" style="width: 40px; height: 40px; border-radius: 50%; background-color: red;"></div>
+                        <div style="font-size: 24px; text-align: center;">关闭</div>
+                    </div>
+                    <div>
+                        <div class="green-light" id="pump-green" style="width: 40px; height: 40px; border-radius: 50%; background-color: gray;"></div>
+                        <div style="font-size: 24px; text-align: center;">开启</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="status-item">
+                <h3>照明灯</h3>
+                <div style="display: flex; gap: 10px;">
+                    <div>
+                        <div class="red-light" id="light-red" style="width: 40px; height: 40px; border-radius: 50%; background-color: red;"></div>
+                        <div style="font-size: 24px; text-align: center;">关闭</div>
+                    </div>
+                    <div>
+                        <div class="green-light" id="light-green" style="width: 40px; height: 40px; border-radius: 50%; background-color: gray;"></div>
+                        <div style="font-size: 24px; text-align: center;">开启</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="status-item">
+                <h3>空调</h3>
+                <div style="display: flex; gap: 10px;">
+                    <div>
+                        <div class="red-light" id="ac-red" style="width: 40px; height: 40px; border-radius: 50%; background-color: red;"></div>
+                        <div style="font-size: 24px; text-align: center;">关闭</div>
+                    </div>
+                    <div>
+                        <div class="green-light" id="ac-green" style="width: 40px; height: 40px; border-radius: 50%; background-color: gray;"></div>
+                        <div style="font-size: 24px; text-align: center;">开启</div>
+                    </div>
+                </div>
+
+            </div>
+        <div class="chart-container" style="margin-top: -615px; margin-left: 280px; margin-right: auto;">
+            <h2>温湿度变化趋势图</h2>
+            <canvas id="tempHumidityChart"></canvas>
+        </div>
+            <div class="device-control" style="margin-left: 1170px; margin-top: -520px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 200px;">
+                <h2>设备控制</h2>
+                <div class="control-item">
+                    <h3>风扇</h3>
+                    <div style="margin-top: 10px;">
+                        <button onclick="toggleDevice('fan', true)" style="padding: 5px 10px; margin-right: 5px;">开启</button>
+                        <button onclick="toggleDevice('fan', false)" style="padding: 5px 10px;">关闭</button>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <h3>水泵</h3>
+                    <div style="margin-top: 10px;">
+                        <button onclick="toggleDevice('pump', true)" style="padding: 5px 10px; margin-right: 5px;">开启</button>
+                        <button onclick="toggleDevice('pump', false)" style="padding: 5px 10px;">关闭</button>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <h3>照明灯</h3>
+                    <div style="margin-top: 10px;">
+                        <button onclick="toggleDevice('light', true)" style="padding: 5px 10px; margin-right: 5px;">开启</button>
+                        <button onclick="toggleDevice('light', false)" style="padding: 5px 10px;">关闭</button>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <h3>空调</h3>
+                    <div style="margin-top: 10px;">
+                        <button onclick="toggleDevice('ac', true)" style="padding: 5px 10px; margin-right: 5px;">开启</button>
+                        <button onclick="toggleDevice('ac', false)" style="padding: 5px 10px;">关闭</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟传感器数据更新
+        function updateSensorData() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            
+            // 生成随机数据模拟传感器读数
+            const tempValue = (24 + Math.random() * 1).toFixed(1);
+            const humiValue = (60 + Math.random() * 1).toFixed(1);
+            const lightValue = Math.floor(1000 + Math.random() * 5000);
+            const co2Value = Math.floor(400 + Math.random() * 1000);
+            
+            document.getElementById('temperature').textContent = tempValue + '°C';
+            document.getElementById('temp-time').textContent = timeString;
+            
+            document.getElementById('humidity').textContent = humiValue + '%';
+            document.getElementById('humi-time').textContent = timeString;
+            
+            document.getElementById('light').textContent = lightValue + 'Lux';
+            document.getElementById('light-time').textContent = timeString;
+            
+            document.getElementById('co2').textContent = co2Value + 'ppm';
+            document.getElementById('co2-time').textContent = timeString;
+            
+            // 更新图表数据
+            updateChart(tempValue, humiValue);
+        }
+        
+        // 温湿度图表数据
+        const tempData = [];
+        const humiData = [];
+        const labels = [];
+        
+        // 初始化图表
+        const ctx = document.getElementById('tempHumidityChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '温度 (°C)',
+                        data: tempData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.1
+                    },
+                    {
+                        label: '湿度 (%)',
+                        data: humiData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // 更新图表函数
+        function updateChart(temp, humi) {
+            const now = new Date();
+            const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+            
+            tempData.push(temp);
+            humiData.push(humi);
+            labels.push(timeLabel);
+            
+            // 保持最多30个数据点
+            if (tempData.length > 30) {
+                tempData.shift();
+                humiData.shift();
+                labels.shift();
+            }
+            
+            chart.update();
+        }
+        
+        // 切换设备状态
+        function toggleDevice(device, status) {
+            document.getElementById(device + '-red').style.backgroundColor = status ? 'gray' : 'red';
+            document.getElementById(device + '-green').style.backgroundColor = status ? 'green' : 'gray';
+            
+            // 这里可以添加实际控制设备的代码
+            console.log(device + '状态已设置为: ' + (status ? '开启' : '关闭'));
+        }
+        
+
+        
+
+
+        // 每3秒更新一次数据
+        setInterval(updateSensorData, 3000);
+        updateSensorData(); // 初始更新
+        updateDeviceStatus(); // 初始设备状态
+        setInterval(updateDeviceStatus, 3000); // 每3秒更新设备状态
+    </script>
+</body>
+</html>
